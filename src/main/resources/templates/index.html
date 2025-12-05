@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Career Navigator</title>
+
+    <!-- Particle JS library for animated background -->
+    <script src="https://cdn.jsdelivr.net/npm/particles.js"></script>
+
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+
+<!-- =============================== -->
+<!--      PARTICLE BACKGROUND       -->
+<!-- =============================== -->
+<div id="particles-js"></div>
+
+
+<!-- =============================== -->
+<!--          HERO SECTION          -->
+<!-- =============================== -->
+<div class="hero fade-in">
+    <div class="hero-icon">📈</div>
+    <h1 class="hero-title">Career Navigator</h1>
+    <p class="hero-subtitle">Discover opportunities that elevate your career</p>
+</div>
+
+
+<!-- =============================== -->
+<!--     SEARCH FORM (GLASS UI)     -->
+<!-- =============================== -->
+<div class="glass-card fade-in">
+    <form action="/recommend" method="post">
+
+        <!-- Skill Input -->
+        <div class="input-block">
+            <label>Your Skills & Expertise</label>
+            <input type="text" name="skill" placeholder="Java, Python, Data Science..." required>
+        </div>
+
+        <!-- Location Input -->
+        <div class="input-block">
+            <label>Preferred Location</label>
+            <input type="text" name="location" placeholder="Anywhere, USA">
+        </div>
+
+        <!-- Experience Input -->
+        <div class="input-block">
+            <label>Years of Experience</label>
+            <input type="number" name="experienceYears" placeholder="0 - 20">
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="discover-btn">Discover Jobs</button>
+    </form>
+</div>
+
+
+<!-- ====================================== -->
+<!--        RESULTS SECTION (THYMELEAF)     -->
+<!-- ====================================== -->
+<div th:if="${submitted}" class="results-card fade-in">
+
+    <h2 class="results-title">Recommended Jobs</h2>
+
+    <!-- Message shown if page 1 contains zero results -->
+    <p th:if="${jobs != null and jobs.size() == 0}"
+       class="limit-msg"
+       style="text-align:center; margin-top:10px;">
+       Sorry, we don’t have any job recommendations for this search.
+    </p>
+
+    <!-- Wrapper where job cards will be appended -->
+    <div id="job-list">
+
+        <!-- Server-rendered job cards (first page only) -->
+        <div th:each="job : ${jobs}" class="job-card">
+            <div class="result-item">
+                <span class="result-label">Job Title:</span>
+                <span th:text="${job.jobTitle}"></span>
+            </div>
+
+            <div class="result-item">
+                <span class="result-label">Company:</span>
+                <span th:text="${job.companyName}"></span>
+            </div>
+
+            <div class="result-item">
+                <span class="result-label">Location:</span>
+                <span th:text="${job.location}"></span>
+            </div>
+
+            <div class="result-item">
+                <span class="result-label">Salary:</span>
+                <span th:text="${job.salary}"></span>
+            </div>
+
+            <div class="result-item">
+                <span class="result-label">Description:</span>
+                <p th:text="${job.description}"></p>
+            </div>
+
+            <!-- Apply button only shown if URL exists -->
+            <div th:if="${job.applyUrl != null}">
+                <a th:href="${job.applyUrl}" target="_blank" class="apply-btn">Apply Now →</a>
+            </div>
+
+            <hr>
+        </div>
+
+    </div>
+
+    <!-- LOAD MORE BUTTON (AJAX) -->
+    <div id="load-more-container" style="text-align:right; margin-top:20px;">
+        <button id="loadMoreBtn" class="load-more-btn">Load More Jobs</button>
+    </div>
+
+</div>
+
+
+<!-- ====================================== -->
+<!--            AJAX LOAD MORE              -->
+<!-- ====================================== -->
+<script>
+
+    // Tracks which page to load next
+    let currentPage = 1;
+
+    // Inject Thymeleaf values into JS
+    const skill = "[[${skill}]]";
+    const locationVal = "[[${location}]]";
+    const exp = "[[${experienceYears}]]";
+
+    // Handles the "Load More" button click
+    document.getElementById("loadMoreBtn").addEventListener("click", function () {
+
+        currentPage++;
+
+        fetch(`/load-more?skill=${skill}&location=${locationVal}&experienceYears=${exp}&page=${currentPage}`)
+            .then(res => res.json())
+            .then(data => {
+
+                // If no more results → stop pagination
+                if (data.length === 0) {
+                    document.getElementById("load-more-container").innerHTML =
+                        "<p class='limit-msg'>Yes, you have reached the limit.</p>";
+                    return;
+                }
+
+                // Append additional job cards to the DOM
+                let container = document.getElementById("job-list");
+
+                data.forEach(job => {
+                    container.innerHTML += `
+                        <div class="job-card">
+                          <div class="result-item"><span class="result-label">Job Title:</span> ${job.jobTitle}</div>
+                          <div class="result-item"><span class="result-label">Company:</span> ${job.companyName}</div>
+                          <div class="result-item"><span class="result-label">Location:</span> ${job.location}</div>
+                          <div class="result-item"><span class="result-label">Salary:</span> ${job.salary}</div>
+                          <div class="result-item"><span class="result-label">Description:</span> ${job.description}</div>
+                          <a href="${job.applyUrl}" target="_blank" class="apply-btn">Apply Now →</a>
+                          <hr>
+                        </div>
+                    `;
+                });
+            });
+    });
+
+</script>
+
+
+<!-- ====================================== -->
+<!--         PARTICLES.JS CONFIG            -->
+<!-- ====================================== -->
+<script>
+particlesJS("particles-js", {
+    "particles": {
+        "number": { "value": 80, "density": { "enable": true, "value_area": 900 }},
+        "color": { "value": "#ffffff" },
+        "shape": { "type": "circle" },
+        "opacity": { "value": 0.25 },
+        "size": { "value": 3, "random": true },
+        "line_linked": {
+            "enable": true,
+            "distance": 150,
+            "color": "#ffffff",
+            "opacity": 0.25
+        },
+        "move": { "enable": true, "speed": 1.8 }
+    }
+});
+</script>
+
+</body>
+</html>
