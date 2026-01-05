@@ -1,6 +1,6 @@
 # Name - Nikhil Sagar
 # Course - Advanced Programming Techniques CS622
-# Extra credit project
+# project
 
 
 
